@@ -1,0 +1,19 @@
+# AB Bank - SDP Module Proposal (FICTIONAL TRAINING DATA)
+
+Prepared for: AB Bank Ltd (fictional). Prepared by: Presales Team.
+
+## 1. Scope
+Deployment of the Service Delivery Platform (SDP) module across 42 branches,
+with a phased rollout: Phase 1 (12 branches, Q1), Phase 2 (30 branches, Q3).
+
+## 2. Commercials
+SDP licence: USD 180,000 per year. Implementation fee: USD 65,000 one-time.
+Support: 18% of licence fee, 24x5 coverage. Volume discount of 6% applies
+if Phase 2 is signed within 90 days of Phase 1 go-live.
+
+## 3. Technical
+Hosting: client's on-premise data centre, RHEL 9. Integration via REST with
+the core banking system (fictional "CoreBank 7"). Max response time 800 ms p95.
+
+## 4. Assumptions
+Client provides UAT environment 3 weeks before each phase.
