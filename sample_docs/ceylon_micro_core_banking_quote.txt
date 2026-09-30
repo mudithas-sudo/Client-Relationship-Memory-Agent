@@ -1,0 +1,16 @@
+# Ceylon Microfinance - Core Banking Lite Quote (FICTIONAL TRAINING DATA)
+
+Prepared for: Ceylon Microfinance Ltd (fictional). Prepared by: Presales Team.
+
+## 1. Scope
+Core Banking Lite for 8 branches and 2 mobile units; savings, micro-loans,
+and field-officer tablet app. Single-phase rollout over 14 weeks.
+
+## 2. Commercials
+Licence: USD 42,000 per year. Implementation fee: USD 18,500 one-time.
+Support: 15% of licence fee, business hours. A 4% discount applies if the
+annual licence is prepaid before contract signature.
+
+## 3. Technical
+Hosting: vendor cloud (shared tenancy), data residency in Sri Lanka.
+Integration: LankaPay CEFTS for disbursements; SMS OTP via cPaaS gateway.

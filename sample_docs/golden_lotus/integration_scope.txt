@@ -1,0 +1,22 @@
+# Golden Lotus Hotels - Integration Scope Note (FICTIONAL TRAINING DATA)
+
+Prepared after the 2026-09-22 technical workshop at Colombo head office.
+
+## Systems
+- Opera PMS v5.6 (on-premise at each property; nightly sync to head office)
+- Service Desk: Freshservice (cloud)
+- Loyalty: in-house "Lotus Club" MySQL 8 database
+
+## Decisions from the workshop
+1. Booking confirmations trigger from the head-office Opera sync, NOT per
+   property, to avoid 11 separate connectors. Accepted latency: up to 15 min.
+2. Check-in links go out at 07:00 hotel-local time on arrival day.
+3. In-stay requests create Freshservice tickets via webhook; SLA 10 min
+   first response, tracked on the client side.
+4. Lotus Club tier (Silver/Gold/Jade) must appear in message personalisation;
+   read-only access to a nightly CSV export was agreed - no direct DB access.
+
+## Open items
+- WhatsApp template approvals for 3 brands (client marketing owns copy).
+- Data residency: guest phone numbers must remain in Sri Lanka; confirm the
+  vendor's WhatsApp BSP routing satisfies this before contract.

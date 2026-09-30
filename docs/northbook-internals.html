@@ -1,0 +1,340 @@
+<title>Northbook Internals</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Fragment+Mono&display=swap">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#fdfcf9; --ink:#1c2723; --muted:#68756d;
+  --line:#e2ddd0; --code-bg:#efece4;
+  --green:#1e4d3b; --green-soft:#e3ede6;
+  --brass:#a97e2f; --brass-soft:#f2e9d6;
+  --cloud:#39566b; --cloud-soft:#e2eaf0;
+  --ok:#2e7d4f; --bad:#a2402f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14201b; --surface:#1b2823; --ink:#e7eae5; --muted:#98a69d;
+    --line:#31403a; --code-bg:#22312b;
+    --green:#7fc2a2; --green-soft:#1e3a2f;
+    --brass:#d9ab5c; --brass-soft:#3c2f17;
+    --cloud:#8fb3cc; --cloud-soft:#1e3242;
+    --ok:#6fcf97; --bad:#e59080;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14201b; --surface:#1b2823; --ink:#e7eae5; --muted:#98a69d;
+  --line:#31403a; --code-bg:#22312b;
+  --green:#7fc2a2; --green-soft:#1e3a2f;
+  --brass:#d9ab5c; --brass-soft:#3c2f17;
+  --cloud:#8fb3cc; --cloud-soft:#1e3242;
+  --ok:#6fcf97; --bad:#e59080;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);margin:0;
+  font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.62}
+.wrap{max-width:880px;margin:0 auto;padding-block:44px 80px;padding-inline:20px}
+h1,h2,h3{font-family:"Fraunces",serif;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5.5vw,46px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(21px,3.4vw,27px);font-weight:600;margin-top:66px;margin-bottom:8px}
+h3{font-size:17.5px;font-weight:600;margin-top:28px;margin-bottom:6px}
+p{margin:10px 0;max-width:72ch}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--brass)}
+.lede{font-size:18px;color:var(--muted);max-width:62ch}
+code{font-family:"Fragment Mono",monospace;font-size:.85em;background:var(--code-bg);
+  border-radius:4px;padding:1px 5px}
+figure{margin:24px 0;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:18px 14px 10px}
+figure>div{overflow-x:auto}
+figcaption{font-size:13.5px;color:var(--muted);padding:8px 6px 2px}
+svg{max-width:100%;height:auto;display:block;margin:0 auto}
+svg text{font-family:"Instrument Sans",system-ui,sans-serif}
+svg .mono{font-family:"Fragment Mono",monospace}
+.tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;border-radius:99px;padding:2px 10px;vertical-align:2px;color:#fff}
+.tag.local{background:var(--green)}
+.tag.cloud{background:var(--cloud)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:none;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.walk{counter-reset:st;list-style:none;margin:18px 0;padding:0}
+.walk li{position:relative;padding:0 0 20px 44px;max-width:72ch}
+.walk li::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:0;
+  width:28px;height:28px;border-radius:50%;background:var(--brass-soft);color:var(--brass);
+  font:600 13px "Fraunces",serif;display:grid;place-items:center;border:1px solid var(--line)}
+.walk li::after{content:"";position:absolute;left:13.5px;top:32px;bottom:0;width:1.5px;background:var(--line)}
+.walk li:last-child::after{display:none}
+.walk b{font-weight:600}
+.callout{border-left:3px solid var(--brass);background:var(--brass-soft);
+  border-radius:0 10px 10px 0;padding:12px 16px;margin:18px 0;font-size:15px}
+.filemap{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin:18px 0}
+.fm{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.fm code{background:none;padding:0;font-size:13px;color:var(--green);font-weight:500}
+.fm p{font-size:13.5px;color:var(--muted);margin:5px 0 0}
+footer{margin-top:72px;font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+</style>
+
+<div class="wrap">
+<p class="eyebrow">Northbook · How it all works</p>
+<h1>The whole flow, simply</h1>
+<p class="lede">One agent, three front doors, four kinds of memory, two clouds-worth of
+plumbing — explained the way you'd explain it to a new teammate.</p>
+
+<h2>1 · The idea in one paragraph</h2>
+<p>Northbook is a pre-sales assistant that never forgets a client. Documents
+(proposals, SLAs, memos) live in a <b>filing cabinet</b>; facts from past meetings
+("their CTO is Ruwan", "budgets approve in November") live in a <b>notebook</b>
+shared by the whole account team. When you ask something, an AI model (Gemini)
+decides which drawer or page to consult, tools fetch the real content, and the
+answer always cites where it came from. Everything is locked to <b>one client at a
+time</b> — chosen by the application, never by the model or the user's typing.</p>
+
+<h2>2 · The map: what talks to what</h2>
+<p>There are three ways in, one brain in the middle, and two places things are
+stored. Green parts run <span class="tag local">on your machine</span>; blue parts are
+<span class="tag cloud">Google Cloud</span>.</p>
+
+<figure>
+<div>
+<svg viewBox="0 0 880 470" role="img" aria-label="System map: three front ends (chat CLI, adk web, Northbook console) call one Runner with the agent and its five tools; artifact tools read a local file store, memory tools call Vertex Memory Bank, sessions live in Agent Engine, and the model runs on Gemini's global endpoint.">
+  <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.3" color="var(--ink)">
+    <!-- front doors -->
+    <rect x="20"  y="24" width="160" height="58" rx="10" fill="var(--surface)"/>
+    <rect x="200" y="24" width="160" height="58" rx="10" fill="var(--surface)"/>
+    <rect x="380" y="24" width="160" height="58" rx="10" fill="var(--surface)" stroke="var(--brass)" stroke-width="2"/>
+    <!-- runner box -->
+    <rect x="120" y="150" width="420" height="150" rx="12" stroke="var(--green)" stroke-width="2" fill="var(--green-soft)" fill-opacity=".5"/>
+    <rect x="140" y="188" width="170" height="94" rx="8" fill="var(--surface)"/>
+    <rect x="330" y="188" width="190" height="94" rx="8" fill="var(--surface)"/>
+    <!-- file store -->
+    <rect x="60" y="368" width="230" height="66" rx="10" fill="var(--surface)" stroke="var(--green)" stroke-width="1.6"/>
+    <!-- cloud -->
+    <rect x="580" y="130" width="278" height="304" rx="12" stroke="var(--cloud)" stroke-width="2" fill="var(--cloud-soft)" fill-opacity=".45"/>
+    <rect x="600" y="168" width="238" height="56" rx="8" fill="var(--surface)"/>
+    <rect x="600" y="240" width="238" height="72" rx="8" fill="var(--surface)"/>
+    <rect x="600" y="328" width="238" height="72" rx="8" fill="var(--surface)"/>
+    <!-- arrows: doors -> runner -->
+    <line x1="100" y1="82" x2="230" y2="150" marker-end="url(#a1)"/>
+    <line x1="280" y1="82" x2="300" y2="150" marker-end="url(#a1)"/>
+    <line x1="460" y1="82" x2="380" y2="150" marker-end="url(#a1)"/>
+    <!-- tools -> stores -->
+    <path d="M200 282 L175 368" stroke="var(--green)" stroke-width="1.7" marker-end="url(#a1)" color="var(--green)"/>
+    <path d="M425 282 L620 335" stroke="var(--cloud)" stroke-width="1.7" marker-end="url(#a1)" color="var(--cloud)"/>
+    <!-- runner <-> model, sessions -->
+    <line x1="540" y1="196" x2="600" y2="196" stroke="var(--cloud)" stroke-width="1.7" marker-end="url(#a1)" color="var(--cloud)"/>
+    <line x1="540" y1="262" x2="600" y2="270" stroke="var(--cloud)" stroke-width="1.7" marker-end="url(#a1)" color="var(--cloud)"/>
+  </g>
+  <g fill="var(--ink)" font-size="13">
+    <text x="100" y="48" text-anchor="middle" font-weight="600">chat.py</text>
+    <text x="100" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">terminal, per person</text>
+    <text x="280" y="48" text-anchor="middle" font-weight="600">adk web :8002</text>
+    <text x="280" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">framework dev UI</text>
+    <text x="460" y="48" text-anchor="middle" font-weight="600">Northbook :8010</text>
+    <text x="460" y="66" text-anchor="middle" font-size="11" fill="var(--muted)">the product console</text>
+    <text x="136" y="174" font-weight="700" fill="var(--green)" font-size="12" letter-spacing="1">RUNNER + AGENT (your machine)</text>
+    <text x="225" y="210" text-anchor="middle" font-weight="600" font-size="12.5">The agent</text>
+    <text x="225" y="228" text-anchor="middle" font-size="11" fill="var(--muted)">instruction, scoped to</text>
+    <text class="mono" x="225" y="244" text-anchor="middle" font-size="11">state["client_id"]</text>
+    <text x="225" y="268" text-anchor="middle" font-size="11" fill="var(--muted)">refuses without a client</text>
+    <text x="425" y="210" text-anchor="middle" font-weight="600" font-size="12.5">Five tools</text>
+    <text class="mono" x="425" y="229" text-anchor="middle" font-size="10.5">upload / fetch / list_artifacts</text>
+    <text class="mono" x="425" y="246" text-anchor="middle" font-size="10.5">recall_client_memory</text>
+    <text class="mono" x="425" y="263" text-anchor="middle" font-size="10.5">memorize_meeting</text>
+    <text x="175" y="394" text-anchor="middle" font-weight="600" font-size="12.5">Filing cabinet (disk)</text>
+    <text class="mono" x="175" y="412" text-anchor="middle" font-size="10.5">artifact_store_data/</text>
+    <text x="175" y="426" text-anchor="middle" font-size="10.5" fill="var(--muted)">versioned documents, per client</text>
+    <text x="596" y="154" font-weight="700" fill="var(--cloud)" font-size="12" letter-spacing="1">GOOGLE CLOUD (ADC login)</text>
+    <text x="719" y="190" text-anchor="middle" font-weight="600" font-size="12.5">Gemini · gemini-3.8-flash</text>
+    <text x="719" y="208" text-anchor="middle" font-size="10.5" fill="var(--muted)">"global" endpoint — the only thinking part</text>
+    <text x="719" y="262" text-anchor="middle" font-weight="600" font-size="12.5">Agent Engine Sessions</text>
+    <text x="719" y="280" text-anchor="middle" font-size="10.5" fill="var(--muted)">every conversation's events,</text>
+    <text x="719" y="294" text-anchor="middle" font-size="10.5" fill="var(--muted)">stored in us-central1</text>
+    <text x="719" y="350" text-anchor="middle" font-weight="600" font-size="12.5">Memory Bank (notebook)</text>
+    <text x="719" y="368" text-anchor="middle" font-size="10.5" fill="var(--muted)">facts extracted from past meetings,</text>
+    <text x="719" y="382" text-anchor="middle" font-size="10.5" fill="var(--muted)">searchable, per client</text>
+  </g>
+</svg>
+</div>
+<figcaption><b>Fig 1 — The map.</b> All three front doors drive the same Runner and the same
+agent — they differ only in who sets up the session. The model never touches storage
+directly: it can only <em>ask</em> for tools, and the tools do the reading and writing.</figcaption>
+</figure>
+
+<div class="callout"><b>The one safety fact to remember:</b> Gemini has no hands. It
+proposes tool calls; Python code executes them. Every read and write goes through a
+tool that checks the client scope first.</div>
+
+<h2>3 · One message, start to finish</h2>
+<p>Say Kasun opens Northbook, picks <b>LankaPay</b>, and types
+<em>"Brief me on this client before my call."</em> Here is everything that happens:</p>
+
+<ol class="walk">
+<li><b>The app sets the scope — before any AI runs.</b> The Northbook backend creates a
+session with <code>user_id = client_lanka_pay</code> and puts
+<code>client_id</code> + <code>person</code> into session state. Kasun never typed
+the client id; picking it in the sidebar told <em>the server</em>, and the server told
+the session. (No client set? A guard callback refuses the whole turn.)</li>
+<li><b>The Runner assembles the request.</b> It takes the agent's instruction (with the
+client id injected into the prompt text), the conversation so far, and a
+<em>menu</em> of the five tools — just their names, parameters and docstrings, never
+their code — and sends it all to Gemini.</li>
+<li><b>Gemini reads the question and picks from the menu.</b> The instruction says
+"before briefing anyone, check the account memory" — so it answers not with text but
+with a request: <code>recall_client_memory("decision makers, constraints, deadlines")</code>.</li>
+<li><b>The tool runs — in Python, on your machine.</b> It reads
+<code>client_id</code> from state and asks Memory Bank: <em>what do we know about
+this client?</em> Back come extracted facts: "Nadeesha Silva heads switching
+operations… furious about the HSM incident… wants a quarterly drill discussed in
+November."</li>
+<li><b>The result goes back to Gemini, and the loop repeats.</b> Now it wants documents:
+<code>list_client_artifacts()</code> returns compact references (name + one-line
+summary — never the contents), then <code>fetch_artifact("incident_credit_memo.txt@v0")</code>
+pulls one full document from the filing cabinet on disk.</li>
+<li><b>Gemini writes the briefing</b> — stakeholder mood from the notebook, incident
+figures quoted from the document, each with its source named — and the Runner streams
+it back to the browser. Every step (tool call, result, final text) was recorded as an
+<b>event</b> in the session, which is exactly what the Run inspector drawer shows you.</li>
+</ol>
+
+<figure>
+<div>
+<svg viewBox="0 0 880 330" role="img" aria-label="Sequence for one message: browser to backend to runner; Gemini asks for recall_client_memory which queries Memory Bank; then fetch_artifact reads the file store; Gemini composes the briefing which streams back.">
+  <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+  <g color="var(--ink)" stroke="currentColor" fill="none" stroke-width="1.3">
+    <line x1="80"  y1="62" x2="80"  y2="304" stroke-dasharray="3 5" opacity=".45"/>
+    <line x1="300" y1="62" x2="300" y2="304" stroke-dasharray="3 5" opacity=".45"/>
+    <line x1="520" y1="62" x2="520" y2="304" stroke-dasharray="3 5" opacity=".45"/>
+    <line x1="700" y1="62" x2="700" y2="304" stroke-dasharray="3 5" opacity=".45"/>
+    <line x1="820" y1="62" x2="820" y2="304" stroke-dasharray="3 5" opacity=".45"/>
+    <rect x="30"  y="20" width="100" height="34" rx="7" fill="var(--surface)"/>
+    <rect x="235" y="20" width="130" height="34" rx="7" fill="var(--surface)" stroke="var(--green)" stroke-width="1.8"/>
+    <rect x="465" y="20" width="110" height="34" rx="7" fill="var(--surface)" stroke="var(--cloud)" stroke-width="1.8"/>
+    <rect x="640" y="20" width="120" height="34" rx="7" fill="var(--surface)" stroke="var(--cloud)" stroke-width="1.8"/>
+    <rect x="782" y="20" width="76"  height="34" rx="7" fill="var(--surface)" stroke="var(--green)" stroke-width="1.8"/>
+    <line x1="80"  y1="84"  x2="300" y2="84"  marker-end="url(#a2)"/>
+    <line x1="300" y1="112" x2="520" y2="112" stroke="var(--cloud)" stroke-width="1.7" marker-end="url(#a2)" color="var(--cloud)"/>
+    <line x1="520" y1="138" x2="300" y2="138" stroke="var(--cloud)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#a2)" color="var(--cloud)"/>
+    <line x1="300" y1="164" x2="700" y2="164" stroke="var(--brass)" stroke-width="1.7" marker-end="url(#a2)" color="var(--brass)"/>
+    <line x1="700" y1="188" x2="300" y2="188" stroke="var(--brass)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#a2)" color="var(--brass)"/>
+    <line x1="300" y1="216" x2="820" y2="216" stroke="var(--green)" stroke-width="1.7" marker-end="url(#a2)" color="var(--green)"/>
+    <line x1="820" y1="240" x2="300" y2="240" stroke="var(--green)" stroke-width="1.7" stroke-dasharray="5 4" marker-end="url(#a2)" color="var(--green)"/>
+    <line x1="300" y1="268" x2="520" y2="268" stroke="var(--cloud)" stroke-width="1.7" marker-end="url(#a2)" color="var(--cloud)"/>
+    <line x1="300" y1="294" x2="80"  y2="294" marker-end="url(#a2)"/>
+  </g>
+  <g fill="var(--ink)" font-size="12">
+    <text x="80"  y="41" text-anchor="middle" font-weight="600">Browser</text>
+    <text x="300" y="41" text-anchor="middle" font-weight="600">Backend + Runner</text>
+    <text x="520" y="41" text-anchor="middle" font-weight="600">Gemini</text>
+    <text x="700" y="41" text-anchor="middle" font-weight="600">Memory Bank</text>
+    <text x="820" y="41" text-anchor="middle" font-weight="600">Files</text>
+    <text x="190" y="77"  text-anchor="middle" font-size="11">"Brief me on this client"</text>
+    <text x="410" y="105" text-anchor="middle" font-size="11" fill="var(--cloud)">question + tool menu</text>
+    <text class="mono" x="410" y="132" text-anchor="middle" font-size="10.5" fill="var(--cloud)">→ recall_client_memory(…)</text>
+    <text x="500" y="158" text-anchor="middle" font-size="11" fill="var(--brass)">search under client_lanka_pay</text>
+    <text x="500" y="182" text-anchor="middle" font-size="11" fill="var(--brass)">facts: Nadeesha, incident, November</text>
+    <text class="mono" x="560" y="210" text-anchor="middle" font-size="10.5" fill="var(--green)">fetch_artifact("incident_credit_memo@v0")</text>
+    <text x="560" y="234" text-anchor="middle" font-size="11" fill="var(--green)">full document text</text>
+    <text x="410" y="262" text-anchor="middle" font-size="11" fill="var(--cloud)">everything so far → compose</text>
+    <text x="190" y="288" text-anchor="middle" font-size="11">briefing streams in, sources named</text>
+  </g>
+</svg>
+</div>
+<figcaption><b>Fig 2 — One turn.</b> The loop between the Runner and Gemini can repeat
+several times (one hop per tool). Each hop is an event you can open in the Run
+inspector — the drawer is literally replaying this diagram.</figcaption>
+</figure>
+
+<h2>4 · The four kinds of remembering</h2>
+<p>The easiest way to keep the whole design in your head:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Tier</th><th>Plain words</th><th>Lives</th><th>Example here</th></tr></thead>
+<tbody>
+<tr><td><b>Conversation</b></td><td>what was <b>said</b> in this meeting</td><td>Agent Engine session <span class="tag cloud">cloud</span></td><td>the chat you're looking at</td></tr>
+<tr><td><b>State</b></td><td>what is <b>known</b> right now, by key</td><td>on the session</td><td><code>client_id</code>, <code>person</code></td></tr>
+<tr><td><b>Artifacts</b></td><td>what was <b>produced</b> — whole documents</td><td>filing cabinet <span class="tag local">disk</span></td><td><code>sla_addendum.txt@v1</code></td></tr>
+<tr><td><b>Memory</b></td><td>what was <b>learned</b> across meetings</td><td>Memory Bank <span class="tag cloud">cloud</span></td><td>"CTO is Ruwan; budgets in November"</td></tr>
+</tbody></table></div>
+<p>Two details that make this work at scale: documents never sit in the conversation —
+the model sees a reference like <code>sla_addendum.txt@v1 · 830 bytes</code> and fetches
+the body only when a question needs it (so a 200-page file costs nothing until opened);
+and saving a document with the same name again makes a <b>new version</b>, with the old
+ones kept.</p>
+
+<h2>5 · How memory travels between people</h2>
+<figure>
+<div>
+<svg viewBox="0 0 880 210" role="img" aria-label="Timeline: Monday, Dilini says remember; memorize_meeting sends the session to Memory Bank which extracts facts asynchronously; Thursday, Kasun in a new session calls recall_client_memory and receives those facts.">
+  <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.3" color="var(--ink)">
+    <rect x="24"  y="52" width="200" height="76" rx="10" fill="var(--surface)"/>
+    <rect x="330" y="42" width="220" height="96" rx="10" fill="var(--surface)" stroke="var(--cloud)" stroke-width="1.8"/>
+    <rect x="656" y="52" width="200" height="76" rx="10" fill="var(--surface)"/>
+    <line x1="224" y1="90" x2="330" y2="90" stroke="var(--brass)" stroke-width="1.8" marker-end="url(#a3)" color="var(--brass)"/>
+    <line x1="550" y1="90" x2="656" y2="90" stroke="var(--brass)" stroke-width="1.8" marker-end="url(#a3)" color="var(--brass)"/>
+  </g>
+  <g fill="var(--ink)" font-size="12.5">
+    <text x="124" y="76" text-anchor="middle" font-weight="600">Monday · Dilini</text>
+    <text x="124" y="95" text-anchor="middle" font-size="11.5" fill="var(--muted)">"Remember: Nadeesha is furious,</text>
+    <text x="124" y="110" text-anchor="middle" font-size="11.5" fill="var(--muted)">drill talk in November"</text>
+    <text class="mono" x="277" y="80" text-anchor="middle" font-size="10.5" fill="var(--brass)">memorize_meeting</text>
+    <text x="440" y="68" text-anchor="middle" font-weight="600">Memory Bank</text>
+    <text x="440" y="88" text-anchor="middle" font-size="11.5" fill="var(--muted)">an LLM extracts durable facts</text>
+    <text x="440" y="103" text-anchor="middle" font-size="11.5" fill="var(--muted)">from the transcript — takes a few</text>
+    <text x="440" y="118" text-anchor="middle" font-size="11.5" fill="var(--muted)">seconds, filed under the client</text>
+    <text class="mono" x="603" y="80" text-anchor="middle" font-size="10.5" fill="var(--brass)">recall_client_memory</text>
+    <text x="756" y="76" text-anchor="middle" font-weight="600">Thursday · Kasun</text>
+    <text x="756" y="95" text-anchor="middle" font-size="11.5" fill="var(--muted)">new session, new person —</text>
+    <text x="756" y="110" text-anchor="middle" font-size="11.5" fill="var(--muted)">gets Monday's facts in his brief</text>
+  </g>
+</svg>
+</div>
+<figcaption><b>Fig 3 — The notebook is the team's, not the person's.</b> Everything is
+filed under the <em>client</em>, so anyone on the account inherits it. The extraction
+step is asynchronous — a fact becomes searchable a few seconds after "remember", not
+instantly.</figcaption>
+</figure>
+
+<h2>6 · The locks: one client at a time</h2>
+<p>Three rules, enforced in code (not in the prompt), keep clients sealed off from
+each other:</p>
+<p><b>Rule 1 — the scope is set by the caller.</b> <code>chat.py</code> takes the client
+id as a command-line argument; Northbook takes it from the sidebar click. Either way it
+lands in session state before the model runs. Malformed or missing →
+<em>"Session refused"</em>, and the model is never even called.</p>
+<p><b>Rule 2 — every tool checks it.</b> All five tools read
+<code>state["client_id"]</code> themselves and address storage with it. The model
+cannot pass a different client as an argument, because no tool accepts one.</p>
+<p><b>Rule 3 — storage is partitioned by that id.</b> Artifacts live under
+<code>…/users/&lt;client_id&gt;/…</code> on disk; memories are filed under the client in
+Memory Bank. Asking Golden Lotus's session "any SLA credits pending?" finds nothing of
+LankaPay's — verified automatically by <code>run_step5_isolation.py</code>, which fails
+the build on any leak.</p>
+
+<h2>7 · The plumbing gotcha worth knowing</h2>
+<p>Sign-in is <b>Application Default Credentials</b> (<code>gcloud application-default
+login</code>) — no API keys in the code. One quirk of our project: Gemini models are
+served only on the <code>global</code> endpoint, while the Agent Engine (sessions +
+Memory Bank) lives in <code>us-central1</code>. So every launcher sets <em>two</em>
+locations — <code>GOOGLE_CLOUD_LOCATION=global</code> for the model,
+<code>AGENT_ENGINE_LOCATION=us-central1</code> for storage. If briefing suddenly fails
+with "model not found" or "ReasoningEngine does not exist", one of those two is set
+wrong. That's the whole debugging guide.</p>
+
+<h2>8 · Which file does what</h2>
+<div class="filemap">
+<div class="fm"><code>agent.py</code><p>The agent: instruction, tool list, and the no-client refusal guard.</p></div>
+<div class="fm"><code>tools.py</code> · <code>artifact_store.py</code><p>Filing cabinet: upload / fetch / list, client-scoped, versioned, on disk.</p></div>
+<div class="fm"><code>memory_tools.py</code><p>Notebook: <code>recall_client_memory</code> and <code>memorize_meeting</code>, both explicitly client-scoped.</p></div>
+<div class="fm"><code>services.py</code> · <code>memory_config.py</code><p>Chooses real Vertex services when configured, in-memory stand-ins otherwise. Same agent either way.</p></div>
+<div class="fm"><code>crm_app.py</code> · <code>webapp/</code><p>Northbook: the backend that owns client scoping, plus the console UI with the Run inspector.</p></div>
+<div class="fm"><code>chat.py</code> · <code>run_step*.py</code><p>Terminal chat, and the scripted proofs: memory across people, isolation, refusal.</p></div>
+<div class="fm"><code>web_app.sh</code> · <code>run_vertex.sh</code> · <code>web_observe.sh</code><p>Launchers that set the auth + two-location environment so you never have to.</p></div>
+<div class="fm"><code>test_flows/TEST_FLOWS.md</code><p>Ready-made scripts per client, with expected answers to verify against.</p></div>
+</div>
+
+<footer>Client Relationship Memory Agent · ADK Week 4 · Northbook console at :8010,
+adk web at :8002, <code>chat.py</code> in the terminal — same agent behind all three.</footer>
+</div>

@@ -15,6 +15,7 @@ from google.adk.agents.readonly_context import ReadonlyContext
 from google.genai import types
 
 from artifact_store import require_client_id
+from memory_tools import memorize_meeting, recall_client_memory
 from tools import fetch_artifact, list_client_artifacts, upload_artifact
 
 MODEL = "gemini-3.8-flash"
@@ -30,7 +31,15 @@ Client documents are stored as artifacts and are NOT in this conversation.
 - When a question needs a specific detail from a document, call fetch_artifact
   for that document, then answer from the fetched text. Do not guess details.
 - Use upload_artifact only when the user asks you to store a file.
-Quote figures exactly as they appear in the document and name the document."""
+Quote figures exactly as they appear in the document and name the document.
+
+Relationship memory (Step 4):
+- Before briefing anyone, or advising on strategy or timing, call
+  recall_client_memory - it holds institutional knowledge from past meetings,
+  recorded by the whole account team. Cite it as "from our account history".
+- When the user asks you to remember something, or to wrap up a meeting whose
+  facts matter, restate the key facts in your reply and call memorize_meeting.
+- Do only what the user asked for in the current message."""
 
 
 def _require_client(callback_context):
@@ -45,6 +54,7 @@ root_agent = LlmAgent(
     name="client_relationship_agent",
     model=MODEL,
     instruction=_instruction,
-    tools=[upload_artifact, fetch_artifact, list_client_artifacts],
+    tools=[upload_artifact, fetch_artifact, list_client_artifacts,
+           recall_client_memory, memorize_meeting],
     before_agent_callback=_require_client,
 )

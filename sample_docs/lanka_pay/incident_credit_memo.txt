@@ -1,0 +1,19 @@
+# Incident INC-0842 Service Credit Memo (FICTIONAL TRAINING DATA)
+
+Client: LankaPay (Pvt) Ltd. Date of incident: 2026-09-14, 11:22-13:05 IST.
+
+## Summary
+Degraded switching (Severity 1) for 1 h 43 min caused by a failed HSM
+failover during a routine certificate rotation. 38,412 authorisations were
+queued and retried; 1,204 timed out permanently.
+
+## Availability impact
+September availability landed at 99.76%, which per SLA Addendum v2 s.4 puts
+the service credit at 10% of the monthly recurring fee (USD 980).
+
+## Actions agreed
+1. Credit of USD 980 applied to the October invoice (claimed 2026-09-18,
+   within the 60-day window).
+2. HSM failover runbook amended; dual-operator rule for certificate rotation.
+3. Client requested a quarterly failover drill - commercial impact TBD; to be
+   raised in the November account review.

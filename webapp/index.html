@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Fragment+Mono&display=swap">
+<style>
+:root{
+  --paper:#f6f4ef; --panel:#fdfcf9; --ink:#1c2723; --muted:#6d7a72;
+  --line:#e3ded2; --line-soft:#ece8dd;
+  --green:#1e4d3b; --green-soft:#e7efe9; --green-deep:#143528;
+  --brass:#a97e2f; --brass-soft:#f3ead7;
+  --user-bubble:#eceee6; --danger:#a2402f;
+  --shadow:0 1px 2px rgba(28,39,35,.05),0 8px 24px -12px rgba(28,39,35,.18);
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font:14px/1.55 "Instrument Sans",sans-serif;
+  -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+::selection{background:var(--brass-soft)}
+
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ---------- sidebar ---------- */
+.side{width:272px;flex:none;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column}
+.brand{padding:22px 20px 16px;border-bottom:1px solid var(--line-soft)}
+.brand h1{margin:0;font:600 21px/1 "Fraunces",serif;letter-spacing:.01em}
+.brand h1 .dot{color:var(--brass)}
+.brand p{margin:5px 0 0;font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+.clients{flex:1;overflow-y:auto;padding:10px}
+.clients h2{margin:8px 10px 6px;font-size:10.5px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted)}
+.client{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:9px 10px;border-radius:10px;transition:background .15s}
+.client:hover{background:var(--green-soft)}
+.client.active{background:var(--green);color:#f4f1e8}
+.client.active .ind{color:#b9c9bd}
+.mono{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;
+  font:600 12px "Fraunces",serif;background:var(--brass-soft);color:var(--green-deep);
+  border:1px solid #e2d3b4}
+.client.active .mono{background:#f4f1e8;border-color:transparent}
+.client .nm{font-weight:600;font-size:13.5px}
+.client .ind{font-size:11.5px;color:var(--muted)}
+.side-foot{border-top:1px solid var(--line-soft);padding:14px 16px;display:flex;
+  flex-direction:column;gap:8px}
+.side-foot label{font-size:10.5px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted)}
+.side-foot select{font:inherit;padding:7px 10px;border:1px solid var(--line);
+  border-radius:8px;background:var(--paper);color:var(--ink)}
+.mode{font-size:11px;color:var(--muted)}
+.mode b{color:var(--green);font-weight:600}
+
+/* ---------- main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 24px;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+.topbar .who{flex:1;min-width:0}
+.topbar .who h2{margin:0;font:600 19px/1.2 "Fraunces",serif;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.topbar .who span{font-size:12px;color:var(--muted)}
+.btn{padding:8px 14px;border-radius:9px;border:1px solid var(--line);
+  background:var(--panel);font-weight:500;font-size:13px;transition:all .15s}
+.btn:hover{border-color:var(--green);color:var(--green)}
+.btn.primary{background:var(--green);border-color:var(--green);color:#f4f1e8}
+.btn.primary:hover{background:var(--green-deep)}
+
+.thread{flex:1;overflow-y:auto;padding:28px 0 12px;scroll-behavior:smooth}
+.thread-inner{max-width:760px;margin:0 auto;padding:0 24px;display:flex;
+  flex-direction:column;gap:18px}
+.empty{margin:80px auto 0;text-align:center;max-width:420px;color:var(--muted)}
+.empty .mono{width:52px;height:52px;margin:0 auto 14px;font-size:18px}
+.empty h3{font:600 20px "Fraunces",serif;color:var(--ink);margin:0 0 6px}
+.empty p{font-size:13px;margin:0 0 16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{font-size:12.5px;padding:7px 12px;border:1px solid var(--line);
+  border-radius:99px;background:var(--panel);transition:all .15s}
+.chip:hover{border-color:var(--brass);color:var(--brass)}
+
+.msg{display:flex;gap:12px;animation:rise .25s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.user{justify-content:flex-end}
+.msg.user .body{background:var(--user-bubble);border-radius:14px 14px 4px 14px;
+  padding:10px 15px;max-width:70%}
+.msg.agent .avatar{width:30px;height:30px;flex:none;border-radius:50%;
+  background:var(--green);color:#f4f1e8;display:grid;place-items:center;
+  font:600 11px "Fraunces",serif;margin-top:2px}
+.msg.agent .body{max-width:82%}
+.msg .meta{font-size:11px;color:var(--muted);margin-bottom:3px}
+.prose{background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:4px 14px 14px 14px;padding:12px 16px;box-shadow:var(--shadow)}
+.prose :is(h1,h2,h3,h4){font:600 14.5px "Instrument Sans",sans-serif;margin:12px 0 4px}
+.prose h3:first-child,.prose p:first-child{margin-top:0}
+.prose p{margin:7px 0}
+.prose ul,.prose ol{margin:6px 0;padding-left:20px}
+.prose li{margin:3px 0}
+.prose code{font:12px "Fragment Mono",monospace;background:var(--paper);
+  border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px}
+.prose strong{font-weight:600}
+.steps-chip{margin-top:6px;font-size:11.5px;color:var(--muted);display:inline-flex;
+  align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line-soft);
+  border-radius:99px;transition:all .15s}
+.steps-chip:hover{border-color:var(--brass);color:var(--brass)}
+.steps-chip .b-dot{width:6px;height:6px;border-radius:50%;background:var(--brass)}
+
+.working{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;
+  padding:2px 0 0 42px}
+.working .b-dot{width:7px;height:7px;border-radius:50%;background:var(--brass);
+  animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.working em{font-style:normal;font-family:"Fragment Mono",monospace;font-size:11.5px}
+
+.composer{padding:14px 24px 20px}
+.composer-inner{max-width:760px;margin:0 auto;display:flex;gap:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:6px 6px 6px 16px;box-shadow:var(--shadow);transition:border-color .15s}
+.composer-inner:focus-within{border-color:var(--green)}
+.composer textarea{flex:1;border:none;outline:none;background:none;resize:none;
+  font:inherit;color:var(--ink);padding:9px 0;max-height:120px}
+.send{width:38px;height:38px;flex:none;align-self:flex-end;border-radius:10px;
+  background:var(--green);color:#f4f1e8;display:grid;place-items:center;
+  transition:background .15s}
+.send:hover{background:var(--green-deep)}
+.send:disabled{background:var(--line);cursor:default}
+
+/* ---------- drawer ---------- */
+.drawer{width:0;flex:none;background:var(--panel);border-left:1px solid var(--line);
+  overflow:hidden;transition:width .22s ease;display:flex;flex-direction:column}
+.drawer.open{width:360px}
+.drawer-head{display:flex;align-items:center;gap:8px;padding:16px 18px;
+  border-bottom:1px solid var(--line-soft);white-space:nowrap}
+.drawer-head h3{margin:0;font:600 15px "Fraunces",serif;flex:1}
+.drawer-head .x{color:var(--muted);font-size:16px;padding:2px 6px}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 18px;min-width:324px}
+.step{border:1px solid var(--line-soft);border-radius:10px;margin-bottom:10px;
+  overflow:hidden}
+.step-h{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--paper)}
+.step-h .n{font:11px "Fragment Mono",monospace;color:var(--muted)}
+.step-h .t{font:12.5px "Fragment Mono",monospace;font-weight:500;color:var(--green)}
+.step pre{margin:0;padding:9px 12px;font:11.5px/1.5 "Fragment Mono",monospace;
+  white-space:pre-wrap;word-break:break-word;color:var(--ink);max-height:150px;
+  overflow-y:auto;border-top:1px dashed var(--line-soft)}
+.step pre.res{color:#4b5a52;background:#fbfaf6}
+.doc{display:flex;gap:10px;align-items:flex-start;padding:11px 4px;
+  border-bottom:1px solid var(--line-soft)}
+.doc .ic{width:32px;height:32px;flex:none;border-radius:8px;background:var(--brass-soft);
+  display:grid;place-items:center;font:600 10px "Fraunces",serif;color:var(--brass)}
+.doc .nm{font-weight:600;font-size:13px;font-family:"Fragment Mono",monospace}
+.doc .sm{font-size:12px;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:30px}
+@media (max-width:900px){.side{width:76px}
+  .side .nm,.side .ind,.brand p,.side-foot label,.mode{display:none}
+  .brand h1{font-size:15px}.drawer.open{width:300px}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><h1>Northbook<span class="dot">.</span></h1>
+      <p>CLIENT RELATIONSHIP MEMORY</p></div>
+    <nav class="clients"><h2>Accounts</h2><div id="clientList"></div></nav>
+    <div class="side-foot">
+      <label for="person">Signed in as</label>
+      <select id="person"></select>
+      <div class="mode">memory: <b id="mode">…</b></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="who"><h2 id="clientName">—</h2><span id="clientInd"></span></div>
+      <button class="btn" id="docsBtn">Documents</button>
+      <button class="btn primary" id="newBtn">New meeting</button>
+    </div>
+    <div class="thread" id="thread"><div class="thread-inner" id="threadInner"></div></div>
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Message the account assistant…"></textarea>
+        <button class="send" id="send" title="Send">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head"><h3 id="drawerTitle">Run inspector</h3>
+      <button class="x" id="drawerClose">✕</button></div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let META=null, current=null, person=null;
+const sessions={}, history={};   // per client_id
+
+const SUGGESTIONS=["Brief me on this client before my call.",
+  "What documents do we have on file?",
+  "Remember: …"];
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function md(s){
+  let h=esc(s);
+  h=h.replace(/`([^`]+)`/g,"<code>$1</code>");
+  h=h.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+  const lines=h.split("\n");let out="",list=null;
+  const flush=()=>{if(list){out+=`</${list}>`;list=null}};
+  for(let ln of lines){
+    if(/^\s*#{1,4}\s+/.test(ln)){flush();out+=`<h3>${ln.replace(/^\s*#{1,4}\s+/,"")}</h3>`}
+    else if(/^\s*[-*•]\s+/.test(ln)){if(list!=="ul"){flush();out+="<ul>";list="ul"}
+      out+=`<li>${ln.replace(/^\s*[-*•]\s+/,"")}</li>`}
+    else if(/^\s*\d+\.\s+/.test(ln)){if(list!=="ol"){flush();out+="<ol>";list="ol"}
+      out+=`<li>${ln.replace(/^\s*\d+\.\s+/,"")}</li>`}
+    else if(/^\s*---+\s*$/.test(ln)){flush()}
+    else if(ln.trim()===""){flush()}
+    else{flush();out+=`<p>${ln}</p>`}}
+  flush();return out}
+
+async function boot(){
+  META=await (await fetch("/api/meta")).json();
+  $("mode").textContent=META.mode;
+  const ps=$("person");
+  META.people.forEach(p=>{const o=document.createElement("option");o.value=o.textContent=p;ps.appendChild(o)});
+  person=META.people[0];
+  ps.onchange=()=>{person=ps.value};
+  META.clients.forEach(c=>{
+    const b=document.createElement("button");b.className="client";b.dataset.id=c.id;
+    b.innerHTML=`<span class="mono">${c.initials}</span>
+      <span><div class="nm">${c.name}</div><div class="ind">${c.industry}</div></span>`;
+    b.onclick=()=>selectClient(c.id);
+    $("clientList").appendChild(b)});
+  selectClient(META.clients[0].id);
+}
+
+function selectClient(id){
+  current=META.clients.find(c=>c.id===id);
+  document.querySelectorAll(".client").forEach(b=>b.classList.toggle("active",b.dataset.id===id));
+  $("clientName").textContent=current.name;
+  $("clientInd").textContent=current.industry+"  ·  "+current.id;
+  closeDrawer(); renderThread();
+}
+
+function renderThread(){
+  const inner=$("threadInner");inner.innerHTML="";
+  const msgs=history[current.id]||[];
+  if(!msgs.length){
+    const d=document.createElement("div");d.className="empty";
+    d.innerHTML=`<div class="mono">${current.initials}</div>
+      <h3>${current.name}</h3>
+      <p>Everything your team knows about this account — documents, meeting
+      memory, commitments — in one conversation.</p>
+      <div class="chips">${SUGGESTIONS.map(s=>`<button class="chip">${esc(s)}</button>`).join("")}</div>`;
+    inner.appendChild(d);
+    d.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{$("input").value=ch.textContent;$("input").focus()});
+    return}
+  msgs.forEach(m=>inner.appendChild(renderMsg(m)));
+  scrollDown();
+}
+function renderMsg(m){
+  const el=document.createElement("div");el.className="msg "+m.role;
+  if(m.role==="user"){el.innerHTML=`<div class="body">${esc(m.text)}</div>`}
+  else{
+    el.innerHTML=`<div class="avatar">${current.initials}</div>
+      <div class="body"><div class="meta">Account assistant</div>
+      <div class="prose">${md(m.text)}</div></div>`;
+    if(m.steps&&m.steps.length){
+      const chip=document.createElement("button");chip.className="steps-chip";
+      chip.innerHTML=`<span class="b-dot"></span> ${m.steps.length/2|0||m.steps.length} tool ${m.steps.length>2?"calls":"call"} — view run`;
+      chip.onclick=()=>openInspector(m.steps);
+      el.querySelector(".body").appendChild(chip)}}
+  return el}
+function scrollDown(){const t=$("thread");t.scrollTop=t.scrollHeight}
+
+async function ensureSession(){
+  if(sessions[current.id])return sessions[current.id];
+  const r=await fetch("/api/sessions",{method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({client_id:current.id,person})});
+  const j=await r.json();sessions[current.id]=j.session_id;return j.session_id}
+
+async function send(){
+  const text=$("input").value.trim();if(!text||$("send").disabled)return;
+  $("input").value="";autosize();
+  const cid=current.id;
+  (history[cid]=history[cid]||[]).push({role:"user",text});
+  renderThread();
+  $("send").disabled=true;
+  const work=document.createElement("div");work.className="working";
+  work.innerHTML=`<span class="b-dot"></span><span>working <em id="workTool"></em></span>`;
+  $("threadInner").appendChild(work);scrollDown();
+
+  try{
+    const sid=await ensureSession();
+    const resp=await fetch("/api/chat",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({client_id:cid,session_id:sid,message:text})});
+    const reader=resp.body.getReader(),dec=new TextDecoder();
+    let buf="",steps=[],finalText="";
+    for(;;){
+      const {done,value}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      let i;while((i=buf.indexOf("\n\n"))>=0){
+        const line=buf.slice(0,i).trim();buf=buf.slice(i+2);
+        if(!line.startsWith("data: "))continue;
+        const ev=JSON.parse(line.slice(6));
+        if(ev.type==="tool_call"){steps.push(ev);
+          const wt=document.getElementById("workTool");if(wt)wt.textContent="· "+ev.name}
+        else if(ev.type==="tool_result"){steps.push(ev)}
+        else if(ev.type==="text"){finalText=ev.content}
+        else if(ev.type==="error"){finalText="⚠ "+ev.message}
+      }}
+    history[cid].push({role:"agent",text:finalText||"(no reply)",steps});
+  }catch(e){history[cid].push({role:"agent",text:"⚠ "+e.message,steps:[]})}
+  $("send").disabled=false;
+  if(current.id===cid)renderThread();
+}
+
+/* drawer */
+function openInspector(steps){
+  $("drawerTitle").textContent="Run inspector";
+  const b=$("drawerBody");b.innerHTML="";
+  let n=0;
+  steps.forEach(s=>{
+    if(s.type==="tool_call"){n++;
+      const d=document.createElement("div");d.className="step";
+      d.innerHTML=`<div class="step-h"><span class="n">${String(n).padStart(2,"0")}</span>
+        <span class="t">${esc(s.name)}</span></div>
+        <pre>${esc(JSON.stringify(s.args,null,1))}</pre>`;
+      b.appendChild(d)}
+    else if(s.type==="tool_result"&&b.lastChild){
+      const pre=document.createElement("pre");pre.className="res";
+      pre.textContent=s.result;b.lastChild.appendChild(pre)}});
+  if(!steps.length)b.innerHTML=`<div class="hint">No tools were needed for this reply.</div>`;
+  $("drawer").classList.add("open")}
+async function openDocs(){
+  $("drawerTitle").textContent="Documents";
+  const b=$("drawerBody");b.innerHTML=`<div class="hint">Loading…</div>`;
+  $("drawer").classList.add("open");
+  const j=await (await fetch("/api/artifacts/"+current.id)).json();
+  b.innerHTML=j.artifacts.length?"":`<div class="hint">No documents stored for this account yet.<br>Ask the assistant to store one.</div>`;
+  j.artifacts.forEach(a=>{
+    const d=document.createElement("div");d.className="doc";
+    d.innerHTML=`<div class="ic">TXT</div><div>
+      <div class="nm">${esc(a.id)}</div>
+      <div class="sm">${esc(a.summary||"")}${a.size?` · ${a.size} B`:""}</div></div>`;
+    b.appendChild(d)})}
+function closeDrawer(){$("drawer").classList.remove("open")}
+$("drawerClose").onclick=closeDrawer;
+$("docsBtn").onclick=openDocs;
+$("newBtn").onclick=()=>{delete sessions[current.id];history[current.id]=[];renderThread()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+
+const inp=$("input");
+function autosize(){inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,120)+"px"}
+inp.addEventListener("input",autosize);
+inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+$("send").onclick=send;
+boot();
+</script>
+</body>
+</html>

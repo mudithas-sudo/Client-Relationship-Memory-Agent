@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 4 — Tiered Context, Artifacts & Memory Bank</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600&family=Fragment+Mono&display=swap">
+<style>
+:root{
+  --bg:#f6f4ef; --surface:#fdfcf9; --ink:#1c2723; --muted:#6d7a72;
+  --line:#e2ddd0; --green:#1e4d3b; --green-soft:#e3ede6;
+  --brass:#a97e2f; --brass-soft:#f2e9d6; --cloud:#39566b;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Instrument Sans",sans-serif;overflow:hidden}
+.deck{height:100%;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;
+  padding:7vh 9vw;animation:in .3s ease}
+.slide.active{display:flex}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:clamp(11px,1.2vw,14px);font-weight:600;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--brass);margin-bottom:1.2vh}
+h1{font-family:"Fraunces",serif;font-weight:700;font-size:clamp(34px,5.6vw,72px);
+  line-height:1.06;margin:0;letter-spacing:-.01em}
+h2{font-family:"Fraunces",serif;font-weight:600;font-size:clamp(26px,3.6vw,46px);
+  line-height:1.1;margin:0 0 4vh}
+.sub{font-size:clamp(15px,1.6vw,20px);color:var(--muted);margin-top:2.5vh;max-width:34ch}
+ul.big{list-style:none;margin:0;padding:0;font-size:clamp(17px,2vw,26px);line-height:1.5}
+ul.big li{padding:1.2vh 0 1.2vh 40px;position:relative}
+ul.big li::before{content:"";position:absolute;left:8px;top:calc(1.2vh + .55em);
+  width:9px;height:9px;border-radius:50%;background:var(--brass)}
+ul.big li b{font-weight:600;color:var(--green)}
+code,.mono{font-family:"Fragment Mono",monospace}
+code{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:2px 9px;font-size:.78em}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-content:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:3vh 2vw;box-shadow:0 8px 24px -16px rgba(28,39,35,.25)}
+.card h3{font-family:"Fraunces",serif;font-size:clamp(18px,2vw,26px);margin:0 0 1.5vh}
+.card ul{list-style:none;margin:0;padding:0;font-size:clamp(14px,1.5vw,19px);line-height:1.55}
+.card li{padding:.6vh 0 .6vh 24px;position:relative}
+.card li::before{content:"—";position:absolute;left:0;color:var(--brass)}
+.tiers{width:100%;border-collapse:collapse;font-size:clamp(15px,1.8vw,23px)}
+.tiers td,.tiers th{padding:1.8vh 1.4vw;border-top:1px solid var(--line);text-align:left}
+.tiers th{font-size:.65em;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border-top:none}
+.tiers td:first-child{font-weight:600;color:var(--green)}
+.tiers .mono{font-size:.72em;color:var(--muted)}
+.steps{counter-reset:s;list-style:none;margin:0;padding:0;
+  font-size:clamp(16px,1.9vw,24px);line-height:1.5}
+.steps li{counter-increment:s;padding:1.1vh 0 1.1vh 58px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:0;top:.9vh;
+  width:38px;height:38px;border-radius:50%;background:var(--brass-soft);color:var(--brass);
+  border:1px solid var(--line);font:600 .75em "Fraunces",serif;display:grid;place-items:center}
+.steps code{font-size:.7em}
+.foot{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;
+  padding:14px 26px;font-size:12px;color:var(--muted)}
+.foot .n{margin-left:auto;font-family:"Fragment Mono",monospace}
+.bar{position:fixed;top:0;left:0;height:3px;background:var(--brass);transition:width .25s}
+.brandmark{font-family:"Fraunces",serif;font-weight:600}
+.brandmark .dot{color:var(--brass)}
+.pill{display:inline-block;font-size:.55em;font-weight:600;letter-spacing:.08em;
+  text-transform:uppercase;border-radius:99px;padding:.3em .9em;vertical-align:middle}
+.pill.local{background:var(--green);color:#f4f1e8}
+.pill.cloud{background:var(--cloud);color:#fff}
+.flow{display:flex;align-items:center;gap:1.2vw;flex-wrap:wrap;
+  font-size:clamp(14px,1.6vw,20px);margin-top:2vh}
+.flow .fbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:1.6vh 1.4vw;text-align:center}
+.flow .fbox small{display:block;color:var(--muted);font-size:.72em;margin-top:.3vh}
+.flow .arr{color:var(--brass);font-size:1.4em}
+kbd{font-family:"Fragment Mono",monospace;border:1px solid var(--line);
+  background:var(--surface);border-radius:5px;padding:1px 7px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="deck" id="deck">
+
+<section class="slide">
+  <div class="eyebrow">Google ADK Curriculum · Week 4 · Team 1</div>
+  <h1>Tiered Context, Artifacts<br>&amp; Vertex AI Memory Bank</h1>
+  <p class="sub">An agent that never forgets a client —
+    <span class="brandmark">Northbook<span class="dot">.</span></span></p>
+  <div class="flow" style="margin-top:6vh">
+    <div class="fbox">Filing cabinet<small>documents · artifacts</small></div>
+    <div class="arr">+</div>
+    <div class="fbox">Notebook<small>meeting facts · Memory Bank</small></div>
+    <div class="arr">=</div>
+    <div class="fbox">Institutional memory<small>per client, across people</small></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Agenda</div>
+  <h2>Week 4 asks for</h2>
+  <ul class="big">
+    <li><b>Context tiers</b> — session state vs external storage</li>
+    <li><b>Artifact offloading</b> — big payloads out, compact refs in</li>
+    <li><b>Vertex AI Memory Bank</b> — facts across sessions, async extraction</li>
+    <li><b>Applied build</b> — one agent, real client-relationship problem</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">What we built</div>
+  <h2>Client Relationship Memory Agent</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>The problem</h3>
+      <ul>
+        <li>account knowledge lives in people's heads</li>
+        <li>proposals &amp; SLAs scattered across inboxes</li>
+        <li>staff change → the relationship resets</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>The build</h3>
+      <ul>
+        <li>presales assistant, 5 fictional clients</li>
+        <li><b>real</b> Memory Bank on Agent Engine</li>
+        <li>versioned document store, per client</li>
+        <li>dedicated web console: <b>Northbook</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Architecture</div>
+  <h2>How Northbook works</h2>
+  <div class="flow">
+    <div class="fbox"><b>Northbook</b><small>console · sets the client scope</small></div>
+    <div class="arr">→</div>
+    <div class="fbox"><b>Runner + Agent</b><small>5 tools · client-scoped</small></div>
+    <div class="arr">→</div>
+    <div class="fbox">Files <span class="pill local">disk</span><small>artifacts</small></div>
+    <div class="fbox">Agent Engine <span class="pill cloud">gcp</span><small>sessions · Memory Bank</small></div>
+    <div class="fbox">Gemini <span class="pill cloud">global</span><small>the only thinking part</small></div>
+  </div>
+  <p class="sub" style="margin-top:4vh">The model has no hands — tools do every read and write.</p>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Concept</div>
+  <h2>Four kinds of remembering</h2>
+  <table class="tiers">
+    <tr><th>Tier</th><th>Plain words</th><th>Lives</th></tr>
+    <tr><td>Conversation</td><td>what was <b>said</b></td><td class="mono">Agent Engine session</td></tr>
+    <tr><td>State</td><td>what is <b>known</b> — by key</td><td class="mono">client_id · person</td></tr>
+    <tr><td>Artifacts</td><td>what was <b>produced</b> — documents</td><td class="mono">sla_addendum.txt@v1</td></tr>
+    <tr><td>Memory</td><td>what was <b>learned</b> — across meetings</td><td class="mono">Memory Bank, per client</td></tr>
+  </table>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Implementation · 1</div>
+  <h2>Artifacts</h2>
+  <ul class="big">
+    <li><code>FileArtifactService</code> — versioned, on disk</li>
+    <li>scoped <code>user_id = client_id, session_id = None</code> → outlives sessions</li>
+    <li>model sees <b>compact refs only</b>: <code>name@v0 · 830 B · summary</code></li>
+    <li>full text fetched <b>only when a question needs it</b></li>
+    <li>proof: prompt tokens 460 → 1,217 <b>only on the fetch turn</b></li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Implementation · 2</div>
+  <h2>Memory Bank</h2>
+  <ul class="big">
+    <li><code>memorize_meeting</code> → session ingested, LLM <b>extracts facts</b></li>
+    <li>extraction is <b>asynchronous</b> — searchable seconds later</li>
+    <li><code>recall_client_memory</code> — deliberate, <b>visible</b> tool call</li>
+    <li>scoped to the <b>client account</b> — shared across the team</li>
+    <li>Dilini records Monday → Kasun inherits Thursday</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Implementation · 3</div>
+  <h2>Scope &amp; isolation</h2>
+  <ul class="big">
+    <li><code>client_id</code> set by <b>calling code</b> — never typed, never inferred</li>
+    <li>no client → <b>session refused</b> before the model runs</li>
+    <li>every tool re-checks scope; storage partitioned by it</li>
+    <li>automated leak test: memory + artifacts + live answer → <b>exit 1 on any leak</b></li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Setup</div>
+  <h2>Setting it up</h2>
+  <ol class="steps">
+    <li>sign in with ADC — <code>gcloud auth application-default login</code></li>
+    <li>set the project env vars</li>
+    <li>install the Vertex SDK</li>
+    <li>create the Agent Engine — <code>setup_agent_engine.py</code>, once</li>
+    <li>verify — <code>check_connectivity.py</code></li>
+  </ol>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Scars</div>
+  <h2>Gotchas we earned</h2>
+  <ul class="big">
+    <li>express-mode key → <b>403</b>; ADC is the formal path</li>
+    <li>models on <code>global</code>, engine in <code>us-central1</code> — <b>two location settings</b></li>
+    <li>built-in memory tools scope by <b>session owner</b> — broke in web; fixed with explicit client scoping</li>
+    <li>consolidation latency — poll before recall</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Live demo</div>
+  <h2>Five minutes, one story</h2>
+  <ol class="steps">
+    <li>Dilini briefs on <b>LankaPay</b> — memory + documents fuse</li>
+    <li>open the <b>Run inspector</b> — every tool call visible</li>
+    <li>Dilini records a new fact → <b>Kasun</b>, new session, inherits it</li>
+    <li>switch to <b>Golden Lotus</b> — nothing leaks</li>
+  </ol>
+  <p class="sub">Northbook · localhost:8010</p>
+</section>
+
+<section class="slide">
+  <div class="eyebrow">Close</div>
+  <h2>What Week 4 taught us</h2>
+  <ul class="big">
+    <li>keep each fact in the <b>cheapest tier that serves it</b></li>
+    <li>scoping is a <b>design decision</b> — defaults assume a person, business needed an account</li>
+    <li>rehearse local, deploy Vertex — <b>same agent code</b></li>
+  </ul>
+  <p class="sub" style="margin-top:5vh">Next: Week 5 — Agentic RAG &amp; grounding. Questions?</p>
+</section>
+
+</div>
+<div class="foot">
+  <span><span class="brandmark">Northbook<span class="dot">.</span></span> · Week 4 · <kbd>←</kbd> <kbd>→</kbd> to navigate</span>
+  <span class="n" id="counter"></span>
+</div>
+<script>
+const slides=[...document.querySelectorAll(".slide")];let i=0;
+function show(n){i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle("active",k===i));
+  document.getElementById("counter").textContent=(i+1)+" / "+slides.length;
+  document.getElementById("bar").style.width=((i+1)/slides.length*100)+"%"}
+addEventListener("keydown",e=>{
+  if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();show(i+1)}
+  if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();show(i-1)}
+  if(e.key==="Home")show(0); if(e.key==="End")show(slides.length-1)});
+addEventListener("click",e=>{if(!e.target.closest("a"))show(i+1)});
+show(0);
+</script>
+</body>
+</html>

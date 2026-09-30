@@ -1,0 +1,26 @@
+# Ruhuna General Insurance - Claims Notification RFP, Excerpt (FICTIONAL TRAINING DATA)
+
+RFP ref: RGI/ICT/2026/31. Response deadline: 2026-10-24, 14:00 IST.
+Client: Ruhuna General Insurance PLC (fictional; motor + property lines).
+
+## Requirement summary
+Automated claims-status notifications to policyholders over SMS, with
+fallback voice (IVR readout) for numbers that do not receive SMS within
+15 minutes. Sinhala, Tamil and English templates mandatory.
+
+## Volumes
+Motor claims: ~18,500/month; property: ~2,100/month. Average 6 status
+notifications per claim lifecycle. Peak: monsoon months up to 2.4x normal.
+
+## Mandatory criteria (fail any = disqualified)
+M1. Data processed and stored within Sri Lanka.
+M2. Delivery reporting per message within 5 minutes, API-accessible.
+M3. 99.9% platform availability with credits.
+M4. Integration with the client's Guidewire ClaimCenter via REST.
+
+## Scored criteria (60% technical / 40% commercial)
+T1. Trilingual template management workflow (10 pts)
+T2. Voice fallback quality and latency (10 pts)
+T3. Monsoon-peak elasticity evidence (10 pts)
+C1. Price per notification, blended (25 pts)
+C2. Implementation cost and timeline (15 pts)

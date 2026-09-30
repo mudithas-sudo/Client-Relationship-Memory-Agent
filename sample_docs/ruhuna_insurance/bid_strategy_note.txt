@@ -1,0 +1,20 @@
+# Ruhuna RFP RGI/ICT/2026/31 - Internal Bid Strategy Note (FICTIONAL TRAINING DATA)
+
+Drafted after the 2026-09-25 bid/no-bid call. Owner: presales.
+
+## Position
+Bid. We satisfy M1-M4; local data centre covers M1, delivery reports are
+real-time (M2), platform SLA 99.95% (M3), and we have two prior Guidewire
+integrations (M4).
+
+## Pricing approach
+Target blended price: LKR 2.65 per notification (floor LKR 2.40 - below
+that margin drops under 30% at monsoon peak capacity). Implementation:
+quote LKR 1.9M, 10 weeks, two milestones.
+
+## Risks / intel
+- Incumbent (fictional "NotifyCo") is weak on Tamil voice quality - press T2.
+- Procurement head is cost-driven; CIO cares about monsoon elasticity (T3):
+  bring the 2025 flood-season throughput report to the orals.
+- Legal flagged: their draft contract has uncapped liquidated damages for
+  M3 breaches - MUST be negotiated to a 20% monthly cap before signature.

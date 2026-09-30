@@ -1,0 +1,23 @@
+# Golden Lotus Hotels - Guest Messaging (cPaaS) Quote GLH-Q-118 (FICTIONAL TRAINING DATA)
+
+Client: Golden Lotus Hotels (fictional; 11 properties, 1,240 rooms).
+Valid until: 2026-11-15.
+
+## 1. Scope
+Guest journey messaging: booking confirmations, check-in links, in-stay
+service requests and post-stay review invites, across SMS and WhatsApp.
+
+## 2. Pricing
+Platform fee: LKR 145,000 per month (covers 3 brands, 11 properties).
+SMS: LKR 2.10 per message (local), LKR 9.80 (international guests).
+WhatsApp session messages: LKR 3.40; template messages LKR 5.60.
+Estimated volume: 210,000 messages/month blended.
+
+## 3. Commitments
+12-month term. 8% discount on the platform fee if all 11 properties go live
+within 60 days of contract signature. Volumes are not committed; pricing
+tier reviewed quarterly.
+
+## 4. Integration
+Opera PMS via the vendor's connector (one-time LKR 380,000 setup);
+webhooks for the in-stay service request flow to the client's Service Desk.
